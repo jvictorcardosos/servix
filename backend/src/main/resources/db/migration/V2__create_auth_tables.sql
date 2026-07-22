@@ -1,6 +1,8 @@
 CREATE TABLE auth_schema.profiles (
     id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(20) NOT NULL UNIQUE
+    name VARCHAR(20) NOT NULL UNIQUE,
+    CONSTRAINT chk_profiles_name
+        CHECK (name IN ('ADMIN', 'GESTOR', 'OPERADOR'))
 );
 
 CREATE TABLE auth_schema.users (
@@ -11,7 +13,9 @@ CREATE TABLE auth_schema.users (
     password_hash VARCHAR(255) NOT NULL,
     status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT chk_users_status
+        CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
 CREATE INDEX idx_users_company_id ON auth_schema.users(company_id);
 

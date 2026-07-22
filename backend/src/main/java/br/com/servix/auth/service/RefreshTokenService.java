@@ -45,14 +45,18 @@ public class RefreshTokenService {
     }
 
     public void revoke(String rawToken) {
-        RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(hash(rawToken))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Refresh token não encontrado"));
+        RefreshToken refreshToken = findByRawToken(rawToken);
         revoke(refreshToken);
     }
 
     public void revoke(RefreshToken refreshToken) {
         refreshToken.setRevoked(true);
         refreshTokenRepository.save(refreshToken);
+    }
+
+    public RefreshToken findByRawToken(String rawToken) {
+        return refreshTokenRepository.findByTokenHash(hash(rawToken))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Refresh token não encontrado"));
     }
 
     private String hash(String token) {

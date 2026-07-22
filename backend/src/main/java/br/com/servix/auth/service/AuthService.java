@@ -45,7 +45,7 @@ public class AuthService {
     public UserResponse register(RegisterUserRequest request) {
         enforceRegistrationAccess(request.companyId());
 
-        String normalizedEmail = request.email().toLowerCase();
+        String normalizedEmail = normalizeEmail(request.email());
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado");
         }
@@ -77,7 +77,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        String normalizedEmail = request.email().toLowerCase();
+        String normalizedEmail = normalizeEmail(request.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(normalizedEmail, request.senha()));
 
@@ -94,6 +94,9 @@ public class AuthService {
     public AuthResponse refresh(RefreshTokenRequest request) {
         RefreshToken refreshToken = refreshTokenService.validate(request.refreshToken());
         User user = refreshToken.getUser();
+        if (user.getStatus() != UserStatus.ACTIVE || user.getCompany().getStatus() != CompanyStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário ou empresa inativa");
+        }
 
         refreshTokenService.revoke(refreshToken);
         String accessToken = jwtService.generateAccessToken(user);
@@ -103,7 +106,12 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken) {
-        refreshTokenService.revoke(refreshToken);
+        ServixUserDetails userDetails = getCurrentUserDetailsOrThrow();
+        RefreshToken entity = refreshTokenService.findByRawToken(refreshToken);
+        if (!entity.getUser().getId().equals(userDetails.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não é permitido revogar token de outro usuário");
+        }
+        refreshTokenService.revoke(entity);
     }
 
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
@@ -141,9 +149,7 @@ public class AuthService {
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof ServixUserDetails userDetails)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cadastro requer autenticação");
-        }
+        ServixUserDetails userDetails = getCurrentUserDetailsOrThrow();
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
@@ -154,5 +160,17 @@ public class AuthService {
         if (!userDetails.getCompanyId().equals(companyId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não é permitido cadastrar usuário em outra empresa");
         }
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase();
+    }
+
+    private ServixUserDetails getCurrentUserDetailsOrThrow() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof ServixUserDetails userDetails)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Operação requer autenticação válida");
+        }
+        return userDetails;
     }
 }

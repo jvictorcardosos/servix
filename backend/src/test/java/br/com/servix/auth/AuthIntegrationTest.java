@@ -72,7 +72,7 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+        .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("admin@servix.com"))
                 .andExpect(jsonPath("$.companyId").value(company.getId().toString()));
     }
@@ -150,6 +150,58 @@ class AuthIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void shouldRefreshTokenAndInvalidateOldRefreshToken() throws Exception {
+        Company company = createCompany("refresh");
+        registerUser(company.getId(), "refresh@servix.com", "SenhaForte123", Set.of(ProfileName.ADMIN));
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginRequest("refresh@servix.com", "SenhaForte123"))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode loginJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
+        String oldRefresh = loginJson.get("refreshToken").asText();
+
+        MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + oldRefresh + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode refreshJson = objectMapper.readTree(refreshResult.getResponse().getContentAsString());
+        String newRefresh = refreshJson.get("refreshToken").asText();
+        assertThat(newRefresh).isNotEqualTo(oldRefresh);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + oldRefresh + "\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldDenyLogoutForAnotherUserRefreshToken() throws Exception {
+        Company company = createCompany("logout");
+        registerUser(company.getId(), "admin.logout@servix.com", "SenhaForte123", Set.of(ProfileName.ADMIN));
+        String adminToken = loginAndGetAccessToken("admin.logout@servix.com", "SenhaForte123");
+        registerUserAs(
+                adminToken,
+                company.getId(),
+                "operador.logout@servix.com",
+                "SenhaForte123",
+                Set.of(ProfileName.OPERADOR));
+
+        LoginResult adminLogin = login("admin.logout@servix.com", "SenhaForte123");
+        LoginResult operatorLogin = login("operador.logout@servix.com", "SenhaForte123");
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer " + adminLogin.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"" + operatorLogin.refreshToken() + "\"}"))
+                .andExpect(status().isForbidden());
+    }
+
     private Company createCompany() {
         return createCompany("base");
     }
@@ -174,10 +226,30 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
+    }
+
+    private void registerUserAs(String accessToken, UUID companyId, String email, String password, Set<ProfileName> profiles)
+            throws Exception {
+        RegisterUserRequest request = new RegisterUserRequest(
+                companyId,
+                "Usuário Teste",
+                email,
+                password,
+                profiles);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
     }
 
     private String loginAndGetAccessToken(String email, String password) throws Exception {
+        return login(email, password).accessToken();
+    }
+
+    private LoginResult login(String email, String password) throws Exception {
         LoginRequest request = new LoginRequest(email, password);
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -185,6 +257,9 @@ class AuthIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        return json.get("accessToken").asText();
+        return new LoginResult(json.get("accessToken").asText(), json.get("refreshToken").asText());
+    }
+
+    private record LoginResult(String accessToken, String refreshToken) {
     }
 }
