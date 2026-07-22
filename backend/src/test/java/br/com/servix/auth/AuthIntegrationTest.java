@@ -1,0 +1,153 @@
+package br.com.servix.auth;
+
+import br.com.servix.auth.domain.ProfileName;
+import br.com.servix.auth.dto.LoginRequest;
+import br.com.servix.auth.dto.RegisterUserRequest;
+import br.com.servix.auth.repository.RefreshTokenRepository;
+import br.com.servix.auth.repository.UserRepository;
+import br.com.servix.auth.service.JwtService;
+import br.com.servix.company.domain.Company;
+import br.com.servix.company.domain.CompanyStatus;
+import br.com.servix.company.repository.CompanyRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class AuthIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @BeforeEach
+    void cleanUp() {
+        refreshTokenRepository.deleteAll();
+        userRepository.deleteAll();
+        companyRepository.deleteAll();
+    }
+
+    @Test
+    void shouldRegisterUser() throws Exception {
+        Company company = createCompany();
+        RegisterUserRequest request = new RegisterUserRequest(
+                company.getId(),
+                "Administrador",
+                "admin@servix.com",
+                "SenhaForte123",
+                Set.of(ProfileName.ADMIN));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("admin@servix.com"))
+                .andExpect(jsonPath("$.companyId").value(company.getId().toString()));
+    }
+
+    @Test
+    void shouldLoginWithValidCredentials() throws Exception {
+        Company company = createCompany();
+        registerUser(company.getId(), "user@servix.com", "SenhaForte123", Set.of(ProfileName.GESTOR));
+
+        LoginRequest request = new LoginRequest("user@servix.com", "SenhaForte123");
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+    }
+
+    @Test
+    void shouldRejectInvalidLogin() throws Exception {
+        Company company = createCompany();
+        registerUser(company.getId(), "invalid@servix.com", "SenhaForte123", Set.of(ProfileName.OPERADOR));
+
+        LoginRequest request = new LoginRequest("invalid@servix.com", "SenhaErrada123");
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldGenerateTokenWithUserId() throws Exception {
+        Company company = createCompany();
+        registerUser(company.getId(), "token@servix.com", "SenhaForte123", Set.of(ProfileName.ADMIN));
+
+        LoginRequest request = new LoginRequest("token@servix.com", "SenhaForte123");
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        UUID userId = UUID.fromString(json.get("userId").asText());
+        String accessToken = json.get("accessToken").asText();
+
+        assertThat(jwtService.extractUserId(accessToken)).isEqualTo(userId);
+    }
+
+    @Test
+    void shouldProtectEndpointWithoutToken() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private Company createCompany() {
+        Company company = new Company();
+        company.setNome("Servix LTDA");
+        company.setDocumento("12345678000199");
+        company.setEmail("contato@servix.com");
+        company.setStatus(CompanyStatus.ACTIVE);
+        return companyRepository.save(company);
+    }
+
+    private void registerUser(UUID companyId, String email, String password, Set<ProfileName> profiles) throws Exception {
+        RegisterUserRequest request = new RegisterUserRequest(
+                companyId,
+                "Usuário Teste",
+                email,
+                password,
+                profiles);
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+}

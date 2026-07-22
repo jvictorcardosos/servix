@@ -1,0 +1,128 @@
+package br.com.servix.auth.service;
+
+import br.com.servix.auth.domain.Profile;
+import br.com.servix.auth.domain.ProfileName;
+import br.com.servix.auth.domain.RefreshToken;
+import br.com.servix.auth.domain.User;
+import br.com.servix.auth.domain.UserStatus;
+import br.com.servix.auth.dto.AuthResponse;
+import br.com.servix.auth.dto.LoginRequest;
+import br.com.servix.auth.dto.RefreshTokenRequest;
+import br.com.servix.auth.dto.RegisterUserRequest;
+import br.com.servix.auth.dto.UserResponse;
+import br.com.servix.auth.repository.ProfileRepository;
+import br.com.servix.auth.repository.UserRepository;
+import br.com.servix.company.domain.Company;
+import br.com.servix.company.domain.CompanyStatus;
+import br.com.servix.company.repository.CompanyRepository;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
+    private final ProfileRepository profileRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
+
+    @Transactional
+    public UserResponse register(RegisterUserRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado");
+        }
+
+        Company company = companyRepository.findById(request.companyId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Empresa não encontrada"));
+
+        if (company.getStatus() != CompanyStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Empresa inativa");
+        }
+
+        User user = new User();
+        user.setCompany(company);
+        user.setNome(request.nome());
+        user.setEmail(request.email().toLowerCase());
+        user.setPasswordHash(passwordEncoder.encode(request.senha()));
+        user.setStatus(UserStatus.ACTIVE);
+        user.setProfiles(resolveProfiles(request.profiles()));
+        userRepository.save(user);
+
+        return new UserResponse(
+                user.getId(),
+                user.getCompany().getId(),
+                user.getNome(),
+                user.getEmail(),
+                user.getStatus(),
+                user.getProfiles().stream().map(profile -> profile.getName().name()).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Transactional
+    public AuthResponse login(LoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
+
+        ServixUserDetails userDetails = (ServixUserDetails) authentication.getPrincipal();
+        User user = userRepository.findById(userDetails.getUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário inválido"));
+
+        String accessToken = jwtService.generateAccessToken(user);
+        RefreshToken refreshToken = refreshTokenService.issue(user);
+
+        return new AuthResponse(
+                user.getId(),
+                user.getCompany().getId(),
+                accessToken,
+                refreshToken.getToken(),
+                user.getProfiles().stream().map(profile -> profile.getName().name()).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Transactional
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.validate(request.refreshToken());
+        User user = refreshToken.getUser();
+
+        refreshToken.setRevoked(true);
+        String accessToken = jwtService.generateAccessToken(user);
+        RefreshToken newRefreshToken = refreshTokenService.issue(user);
+
+        return new AuthResponse(
+                user.getId(),
+                user.getCompany().getId(),
+                accessToken,
+                newRefreshToken.getToken(),
+                user.getProfiles().stream().map(profile -> profile.getName().name()).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
+    }
+
+    private Set<Profile> resolveProfiles(Set<ProfileName> profileNames) {
+        Set<ProfileName> requested = (profileNames == null || profileNames.isEmpty())
+                ? Set.of(ProfileName.OPERADOR)
+                : profileNames;
+
+        Set<Profile> profiles = new HashSet<>();
+        for (ProfileName name : requested) {
+            Profile profile = profileRepository.findByName(name)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Perfil inexistente: " + name));
+            profiles.add(profile);
+        }
+        return profiles;
+    }
+}

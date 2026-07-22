@@ -5,4 +5,15 @@ const apiClient = axios.create({
   timeout: 10000,
 })
 
+export function setupApiClientAuth(authStore) {
+  apiClient.interceptors.request.use((config) => {
+    const nextConfig = { ...config }
+    if (authStore.accessToken) {
+      nextConfig.headers = nextConfig.headers ?? {}
+      nextConfig.headers.Authorization = `Bearer ${authStore.accessToken}`
+    }
+    return nextConfig
+  })
+}
+
 export default apiClient
