@@ -1,5 +1,6 @@
 package br.com.servix.auth.domain;
 
+import br.com.servix.core.audit.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,7 +18,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "refresh_tokens", schema = "auth_schema")
-public class RefreshToken {
+public class RefreshToken extends AuditableEntity {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -36,14 +37,10 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked = false;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @PrePersist
     void prePersist() {
         if (id == null) {
             id = UUID.randomUUID();
         }
-        createdAt = LocalDateTime.now();
     }
 }

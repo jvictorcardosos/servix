@@ -1,6 +1,7 @@
 package br.com.servix.company.domain;
 
 import br.com.servix.auth.domain.User;
+import br.com.servix.core.audit.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,9 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -21,7 +20,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "companies", schema = "company_schema")
-public class Company {
+public class Company extends AuditableEntity {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -40,12 +39,6 @@ public class Company {
     @Column(nullable = false, length = 20)
     private CompanyStatus status = CompanyStatus.ACTIVE;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     @OneToMany(mappedBy = "company")
     private Set<User> users = new HashSet<>();
 
@@ -54,13 +47,5 @@ public class Company {
         if (id == null) {
             id = UUID.randomUUID();
         }
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

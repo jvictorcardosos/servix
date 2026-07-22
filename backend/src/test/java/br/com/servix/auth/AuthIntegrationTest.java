@@ -72,9 +72,9 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("admin@servix.com"))
-                .andExpect(jsonPath("$.companyId").value(company.getId().toString()));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.email").value("admin@servix.com"))
+                .andExpect(jsonPath("$.data.companyId").value(company.getId().toString()));
     }
 
     @Test
@@ -87,8 +87,8 @@ class AuthIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
     }
 
     @Test
@@ -116,8 +116,8 @@ class AuthIntegrationTest {
                 .andReturn();
 
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        UUID userId = UUID.fromString(json.get("userId").asText());
-        String accessToken = json.get("accessToken").asText();
+        UUID userId = UUID.fromString(json.path("data").get("userId").asText());
+        String accessToken = json.path("data").get("accessToken").asText();
 
         assertThat(jwtService.extractUserId(accessToken)).isEqualTo(userId);
     }
@@ -162,7 +162,7 @@ class AuthIntegrationTest {
                 .andReturn();
 
         JsonNode loginJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
-        String oldRefresh = loginJson.get("refreshToken").asText();
+        String oldRefresh = loginJson.path("data").get("refreshToken").asText();
 
         MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -171,7 +171,7 @@ class AuthIntegrationTest {
                 .andReturn();
 
         JsonNode refreshJson = objectMapper.readTree(refreshResult.getResponse().getContentAsString());
-        String newRefresh = refreshJson.get("refreshToken").asText();
+        String newRefresh = refreshJson.path("data").get("refreshToken").asText();
         assertThat(newRefresh).isNotEqualTo(oldRefresh);
 
         mockMvc.perform(post("/api/auth/refresh")
@@ -200,6 +200,19 @@ class AuthIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"refreshToken\":\"" + operatorLogin.refreshToken() + "\"}"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldReturnStandardErrorPayloadOnInvalidRequest() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"invalido\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp").exists())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.path").value("/api/auth/login"))
+                .andExpect(jsonPath("$.details").isArray());
     }
 
     private Company createCompany() {
@@ -257,7 +270,8 @@ class AuthIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        return new LoginResult(json.get("accessToken").asText(), json.get("refreshToken").asText());
+        JsonNode data = json.path("data");
+        return new LoginResult(data.get("accessToken").asText(), data.get("refreshToken").asText());
     }
 
     private record LoginResult(String accessToken, String refreshToken) {

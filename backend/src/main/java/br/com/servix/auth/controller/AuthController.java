@@ -7,6 +7,9 @@ import br.com.servix.auth.dto.RefreshTokenRequest;
 import br.com.servix.auth.dto.RegisterUserRequest;
 import br.com.servix.auth.dto.UserResponse;
 import br.com.servix.auth.service.AuthService;
+import br.com.servix.core.api.ApiResponseFactory;
+import br.com.servix.core.api.ApiSuccessResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,23 +27,35 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    public ResponseEntity<ApiSuccessResponse<UserResponse>> register(
+            @Valid @RequestBody RegisterUserRequest request,
+            HttpServletRequest servletRequest) {
+        UserResponse response = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseFactory.success(HttpStatus.CREATED, "Usuário criado com sucesso", servletRequest.getRequestURI(), response));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<ApiSuccessResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest servletRequest) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponseFactory.success(HttpStatus.OK, "Login realizado com sucesso", servletRequest.getRequestURI(), response));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request));
+    public ResponseEntity<ApiSuccessResponse<AuthResponse>> refresh(
+            @Valid @RequestBody RefreshTokenRequest request,
+            HttpServletRequest servletRequest) {
+        AuthResponse response = authService.refresh(request);
+        return ResponseEntity.ok(ApiResponseFactory.success(HttpStatus.OK, "Token atualizado com sucesso", servletRequest.getRequestURI(), response));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+    public ResponseEntity<ApiSuccessResponse<Void>> logout(
+            @Valid @RequestBody LogoutRequest request,
+            HttpServletRequest servletRequest) {
         authService.logout(request.refreshToken());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponseFactory.success(HttpStatus.OK, "Logout realizado com sucesso", servletRequest.getRequestURI(), null));
     }
 }

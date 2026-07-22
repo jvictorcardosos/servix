@@ -79,7 +79,7 @@ npm run build
 
 ## Status Atual do Projeto
 
-- **Fase atual:** Fase 0 - Fundação (base técnica criada, sem regras de negócio).
+- **Fase atual:** Fase 1.2 - Infraestrutura Compartilhada.
 
 ### O que está funcionando
 
@@ -87,7 +87,14 @@ npm run build
 - Backend Spring Boot 3 com Java 21 e Maven Wrapper configurado.
 - Dependências principais do backend configuradas (Web, Security, JPA, Flyway, PostgreSQL, Validation, Lombok).
 - Arquitetura modular preparada com os módulos: `auth`, `company`, `customer`, `serviceorder`, `billing`, `notification`.
+- Módulo `core` criado com infraestrutura compartilhada:
+  - auditoria (`createdAt`, `updatedAt`, `createdBy`, `updatedBy`);
+  - multi-tenancy centralizado;
+  - respostas padronizadas de sucesso e erro;
+  - paginação/ordenação/filtros reutilizáveis;
+  - logging de requisição com `requestId`, `tenantId`, `userId`.
 - Flyway configurado com migration inicial `V1__initial_setup.sql` para criação dos schemas.
+- Flyway com estrutura de auth/company e constraints base (`V2`, `V3`).
 - Frontend Vue 3 com Vite, Vue Router, Pinia e Axios configurados.
 - Build do frontend executando com sucesso (`npm run build`).
 - Build/teste do backend executando com sucesso via Maven Wrapper (`.\mvnw.cmd clean verify`).
@@ -95,7 +102,7 @@ npm run build
 ### Pendências
 
 - Executar ambiente Docker local com PostgreSQL em máquina com Docker instalado e em execução.
-- Iniciar a Fase 1 após aprovação para começar implementação de funcionalidades de negócio.
+- Iniciar módulos de negócio (clientes, serviços, agenda, ordens) sobre a infraestrutura compartilhada já preparada.
 
 ### Requisitos para executar Docker localmente
 

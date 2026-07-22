@@ -3,6 +3,7 @@ package br.com.servix.auth.service;
 import br.com.servix.auth.domain.RefreshToken;
 import br.com.servix.auth.domain.User;
 import br.com.servix.auth.repository.RefreshTokenRepository;
+import br.com.servix.core.config.JwtProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -10,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,16 +20,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-
-    @Value("${servix.security.jwt.refresh-expiration}")
-    private long refreshExpirationSeconds;
+    private final JwtProperties jwtProperties;
 
     public String issue(User user) {
         String rawToken = UUID.randomUUID() + "." + UUID.randomUUID();
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setTokenHash(hash(rawToken));
-        refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshExpirationSeconds));
+        refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(jwtProperties.getRefreshExpiration()));
         refreshTokenRepository.save(refreshToken);
         return rawToken;
     }

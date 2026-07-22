@@ -1,6 +1,7 @@
 package br.com.servix.auth.service;
 
 import br.com.servix.auth.domain.User;
+import br.com.servix.core.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -12,17 +13,14 @@ import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
-    @Value("${servix.security.jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${servix.security.jwt.access-expiration}")
-    private long accessExpirationSeconds;
+    private final JwtProperties jwtProperties;
 
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
@@ -36,7 +34,7 @@ public class JwtService {
                 .subject(user.getId().toString())
                 .claims(claims)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(accessExpirationSeconds)))
+                .expiration(Date.from(now.plusSeconds(jwtProperties.getAccessExpiration())))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -62,7 +60,7 @@ public class JwtService {
     private SecretKey getSigningKey() {
         try {
             byte[] secretBytes = MessageDigest.getInstance("SHA-256")
-                    .digest(jwtSecret.getBytes(StandardCharsets.UTF_8));
+                    .digest(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
             return Keys.hmacShaKeyFor(secretBytes);
         } catch (NoSuchAlgorithmException ex) {
             throw new IllegalStateException("Não foi possível inicializar chave JWT", ex);

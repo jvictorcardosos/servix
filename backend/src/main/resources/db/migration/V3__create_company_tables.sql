@@ -6,6 +6,8 @@ CREATE TABLE company_schema.companies (
     status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
+    created_by UUID,
+    updated_by UUID,
     CONSTRAINT chk_companies_status
         CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );

@@ -14,6 +14,8 @@ CREATE TABLE auth_schema.users (
     status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
+    created_by UUID,
+    updated_by UUID,
     CONSTRAINT chk_users_status
         CHECK (status IN ('ACTIVE', 'INACTIVE'))
 );
@@ -34,6 +36,9 @@ CREATE TABLE auth_schema.refresh_tokens (
     expires_at TIMESTAMP NOT NULL,
     revoked BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    created_by UUID,
+    updated_by UUID,
     CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES auth_schema.users(id)
 );
 CREATE INDEX idx_refresh_tokens_user_id ON auth_schema.refresh_tokens(user_id);

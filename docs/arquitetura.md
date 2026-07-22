@@ -50,6 +50,7 @@ O Servix terá **visão futura orientada a microserviços**, porém o MVP será 
 backend/
 ├── auth
 ├── company
+├── core
 ├── customer
 ├── service-order
 ├── billing
@@ -215,3 +216,18 @@ Racional: evitar complexidade distribuída dentro de uma única aplicação.
 
 5. **Web-first com backend centralizando regras de negócio**  
 Racional: garante reutilização futura de APIs para novos canais (incluindo mobile).
+
+---
+
+## 12. Infraestrutura compartilhada (Fase 1.2)
+
+Foi criado o módulo **core** para centralizar responsabilidades transversais:
+
+- **Auditoria JPA**: `created_at`, `updated_at`, `created_by`, `updated_by` via Spring Data Auditing.
+- **Multi-tenancy**: resolução de tenant/usuário autenticado e utilitários de validação de escopo.
+- **Erros padronizados**: `GlobalExceptionHandler` com contrato único (`timestamp`, `status`, `code`, `message`, `path`, `details`).
+- **Respostas de sucesso padronizadas**: envelope único para payloads da API.
+- **Paginação reutilizável**: DTOs e utilitários para paginação/ordenação/filtros.
+- **Validações compartilhadas**: utilitários e mensagens comuns.
+- **Configurações compartilhadas**: propriedades e constantes globais.
+- **Logging estruturado**: filtro de requisição com `requestId`, `tenantId` e `userId` em MDC, preparado para observabilidade.

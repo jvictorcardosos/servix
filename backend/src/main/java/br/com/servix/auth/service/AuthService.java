@@ -15,6 +15,8 @@ import br.com.servix.auth.repository.UserRepository;
 import br.com.servix.company.domain.Company;
 import br.com.servix.company.domain.CompanyStatus;
 import br.com.servix.company.repository.CompanyRepository;
+import br.com.servix.core.tenant.TenantContextService;
+import br.com.servix.core.validation.EmailNormalizer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +41,13 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final TenantContextService tenantContextService;
 
     @Transactional
     public UserResponse register(RegisterUserRequest request) {
         enforceRegistrationAccess(request.companyId());
 
-        String normalizedEmail = normalizeEmail(request.email());
+        String normalizedEmail = EmailNormalizer.normalize(request.email());
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado");
         }
@@ -77,7 +79,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        String normalizedEmail = normalizeEmail(request.email());
+        String normalizedEmail = EmailNormalizer.normalize(request.email());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(normalizedEmail, request.senha()));
 
@@ -106,9 +108,9 @@ public class AuthService {
 
     @Transactional
     public void logout(String refreshToken) {
-        ServixUserDetails userDetails = getCurrentUserDetailsOrThrow();
+        java.util.UUID userId = tenantContextService.getRequiredUserId();
         RefreshToken entity = refreshTokenService.findByRawToken(refreshToken);
-        if (!entity.getUser().getId().equals(userDetails.getUserId())) {
+        if (!entity.getUser().getId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não é permitido revogar token de outro usuário");
         }
         refreshTokenService.revoke(entity);
@@ -148,29 +150,9 @@ public class AuthService {
             return;
         }
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        ServixUserDetails userDetails = getCurrentUserDetailsOrThrow();
-
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin) {
+        tenantContextService.assertTenantAccess(companyId);
+        if (!tenantContextService.hasRole("ADMIN")) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas ADMIN pode cadastrar usuários");
         }
-
-        if (!userDetails.getCompanyId().equals(companyId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não é permitido cadastrar usuário em outra empresa");
-        }
-    }
-
-    private String normalizeEmail(String email) {
-        return email.trim().toLowerCase();
-    }
-
-    private ServixUserDetails getCurrentUserDetailsOrThrow() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof ServixUserDetails userDetails)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Operação requer autenticação válida");
-        }
-        return userDetails;
     }
 }

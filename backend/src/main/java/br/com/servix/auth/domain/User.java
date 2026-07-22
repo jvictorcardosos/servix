@@ -1,6 +1,7 @@
 package br.com.servix.auth.domain;
 
 import br.com.servix.company.domain.Company;
+import br.com.servix.core.audit.AuditableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,9 +13,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -25,7 +24,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "users", schema = "auth_schema")
-public class User {
+public class User extends AuditableEntity {
 
     @Id
     @Column(nullable = false, updatable = false)
@@ -48,12 +47,6 @@ public class User {
     @Column(nullable = false, length = 20)
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_profiles",
@@ -67,13 +60,5 @@ public class User {
         if (id == null) {
             id = UUID.randomUUID();
         }
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

@@ -45,16 +45,15 @@ Pacote raiz:
 `br.com.servix`
 
 Pacotes transversais planejados:
-- `br.com.servix.shared` (utilitários, padrões comuns)
-- `br.com.servix.security` (JWT, filtros, configuração de segurança)
-- `br.com.servix.config` (configurações Spring)
-- `br.com.servix.exception` (handlers e erros padronizados)
+- `br.com.servix.core` (infraestrutura compartilhada da aplicação)
+- `br.com.servix.security` (configuração de segurança e filtros de autenticação)
 
 ## 2.3 Módulos internos do monólito
 
 Módulos funcionais planejados:
 - `auth`
 - `company`
+- `core`
 - `customer`
 - `service-order` (em pacote Java: `serviceorder`)
 - `billing`
@@ -72,6 +71,30 @@ br.com.servix.<modulo>/
 ├── validation/
 └── mapper/            (conversão entity <-> dto)
 ```
+
+## 2.5 Módulo Core (infraestrutura compartilhada)
+
+Estrutura base implementada:
+
+```text
+br.com.servix.core/
+├── api/          (resposta padrão de sucesso)
+├── audit/        (auditoria JPA: createdAt/updatedAt/createdBy/updatedBy)
+├── config/       (propriedades e constantes compartilhadas)
+├── exception/    (tratamento global de erros)
+├── logging/      (filtro de logging e MDC)
+├── pagination/   (infra de paginação/ordenação/filtro)
+├── security/     (entrypoint e access denied padronizados)
+├── tenant/       (contexto de tenant/usuário e utilitários multi-tenant)
+└── validation/   (validações/utilitários compartilhados)
+```
+
+Responsabilidades centralizadas no `core`:
+- Auditoria de entidades reutilizável.
+- Contrato único de erros e respostas de sucesso.
+- Base de paginação para módulos futuros.
+- Resolução de tenant para isolamento multi-empresa.
+- Logging padronizado preparado para observabilidade.
 
 ## 2.4 Definição por módulo
 

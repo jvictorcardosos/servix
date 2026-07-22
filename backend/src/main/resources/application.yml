@@ -30,6 +30,13 @@ management:
       exposure:
         include: health,info
 
+logging:
+  level:
+    root: INFO
+    br.com.servix: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId}] [%X{tenantId}] [%X{userId}] %logger{36} - %msg%n"
+
 servix:
   security:
     jwt:
