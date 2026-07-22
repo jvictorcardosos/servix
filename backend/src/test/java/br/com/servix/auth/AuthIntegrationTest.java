@@ -128,11 +128,37 @@ class AuthIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void shouldBlockCrossTenantRegistration() throws Exception {
+        Company companyA = createCompany("a");
+        Company companyB = createCompany("b");
+
+        registerUser(companyA.getId(), "admin@a.com", "SenhaForte123", Set.of(ProfileName.ADMIN));
+        String adminToken = loginAndGetAccessToken("admin@a.com", "SenhaForte123");
+
+        RegisterUserRequest request = new RegisterUserRequest(
+                companyB.getId(),
+                "Usuário B",
+                "user@b.com",
+                "SenhaForte123",
+                Set.of(ProfileName.OPERADOR));
+
+        mockMvc.perform(post("/api/auth/register")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
     private Company createCompany() {
+        return createCompany("base");
+    }
+
+    private Company createCompany(String suffix) {
         Company company = new Company();
-        company.setNome("Servix LTDA");
-        company.setDocumento("12345678000199");
-        company.setEmail("contato@servix.com");
+        company.setNome("Servix " + suffix.toUpperCase());
+        company.setDocumento("123456780001" + Math.abs(suffix.hashCode() % 90 + 10));
+        company.setEmail("contato+" + suffix + "@servix.com");
         company.setStatus(CompanyStatus.ACTIVE);
         return companyRepository.save(company);
     }
@@ -149,5 +175,16 @@ class AuthIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    private String loginAndGetAccessToken(String email, String password) throws Exception {
+        LoginRequest request = new LoginRequest(email, password);
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        return json.get("accessToken").asText();
     }
 }

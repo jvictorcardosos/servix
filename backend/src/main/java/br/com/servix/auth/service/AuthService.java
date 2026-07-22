@@ -17,11 +17,13 @@ import br.com.servix.company.domain.CompanyStatus;
 import br.com.servix.company.repository.CompanyRepository;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +43,10 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(RegisterUserRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        enforceRegistrationAccess(request.companyId());
+
+        String normalizedEmail = request.email().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado");
         }
 
@@ -55,7 +60,7 @@ public class AuthService {
         User user = new User();
         user.setCompany(company);
         user.setNome(request.nome());
-        user.setEmail(request.email().toLowerCase());
+        user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(request.senha()));
         user.setStatus(UserStatus.ACTIVE);
         user.setProfiles(resolveProfiles(request.profiles()));
@@ -67,27 +72,22 @@ public class AuthService {
                 user.getNome(),
                 user.getEmail(),
                 user.getStatus(),
-                user.getProfiles().stream().map(profile -> profile.getName().name()).collect(java.util.stream.Collectors.toSet()));
+                mapProfileNames(user));
     }
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
+        String normalizedEmail = request.email().toLowerCase();
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
+                new UsernamePasswordAuthenticationToken(normalizedEmail, request.senha()));
 
         ServixUserDetails userDetails = (ServixUserDetails) authentication.getPrincipal();
         User user = userRepository.findById(userDetails.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário inválido"));
 
         String accessToken = jwtService.generateAccessToken(user);
-        RefreshToken refreshToken = refreshTokenService.issue(user);
-
-        return new AuthResponse(
-                user.getId(),
-                user.getCompany().getId(),
-                accessToken,
-                refreshToken.getToken(),
-                user.getProfiles().stream().map(profile -> profile.getName().name()).collect(java.util.stream.Collectors.toSet()));
+        String refreshToken = refreshTokenService.issue(user);
+        return buildAuthResponse(user, accessToken, refreshToken);
     }
 
     @Transactional
@@ -95,21 +95,30 @@ public class AuthService {
         RefreshToken refreshToken = refreshTokenService.validate(request.refreshToken());
         User user = refreshToken.getUser();
 
-        refreshToken.setRevoked(true);
+        refreshTokenService.revoke(refreshToken);
         String accessToken = jwtService.generateAccessToken(user);
-        RefreshToken newRefreshToken = refreshTokenService.issue(user);
-
-        return new AuthResponse(
-                user.getId(),
-                user.getCompany().getId(),
-                accessToken,
-                newRefreshToken.getToken(),
-                user.getProfiles().stream().map(profile -> profile.getName().name()).collect(java.util.stream.Collectors.toSet()));
+        String newRefreshToken = refreshTokenService.issue(user);
+        return buildAuthResponse(user, accessToken, newRefreshToken);
     }
 
     @Transactional
     public void logout(String refreshToken) {
         refreshTokenService.revoke(refreshToken);
+    }
+
+    private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
+        return new AuthResponse(
+                user.getId(),
+                user.getCompany().getId(),
+                accessToken,
+                refreshToken,
+                mapProfileNames(user));
+    }
+
+    private Set<String> mapProfileNames(User user) {
+        return user.getProfiles().stream()
+                .map(profile -> profile.getName().name())
+                .collect(Collectors.toSet());
     }
 
     private Set<Profile> resolveProfiles(Set<ProfileName> profileNames) {
@@ -124,5 +133,26 @@ public class AuthService {
             profiles.add(profile);
         }
         return profiles;
+    }
+
+    private void enforceRegistrationAccess(java.util.UUID companyId) {
+        if (userRepository.count() == 0) {
+            return;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof ServixUserDetails userDetails)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cadastro requer autenticação");
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas ADMIN pode cadastrar usuários");
+        }
+
+        if (!userDetails.getCompanyId().equals(companyId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não é permitido cadastrar usuário em outra empresa");
+        }
     }
 }
