@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: servix-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:servix_db}
+    username: ${DB_USER:servix}
+    password: ${DB_PASSWORD:servix}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: company_schema
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations:
+      - classpath:db/migration
+      - classpath:db/migration/common
+      - classpath:db/migration/auth
+      - classpath:db/migration/company
+      - classpath:db/migration/customer
+      - classpath:db/migration/serviceorder
+      - classpath:db/migration/billing
+      - classpath:db/migration/notification
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+servix:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-in-real-env}
+      access-expiration: ${JWT_ACCESS_EXPIRATION:900}
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800}
