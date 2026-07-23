@@ -2,6 +2,7 @@ package br.com.servix.auth.service;
 
 import br.com.servix.auth.domain.User;
 import br.com.servix.auth.domain.UserStatus;
+import br.com.servix.core.tenant.TenantPrincipal;
 import java.util.Collection;
 import java.util.UUID;
 import lombok.Getter;
@@ -10,7 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
-public class ServixUserDetails implements UserDetails {
+public class ServixUserDetails implements UserDetails, TenantPrincipal {
 
     private final UUID userId;
     private final UUID companyId;

@@ -1,6 +1,5 @@
 package br.com.servix.core.tenant;
 
-import br.com.servix.auth.service.ServixUserDetails;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
@@ -12,16 +11,16 @@ public final class SecurityTenantContext {
     }
 
     public static Optional<UUID> currentTenantId() {
-        return currentPrincipal().map(ServixUserDetails::getCompanyId);
+        return currentPrincipal().map(TenantPrincipal::getCompanyId);
     }
 
     public static Optional<UUID> currentUserId() {
-        return currentPrincipal().map(ServixUserDetails::getUserId);
+        return currentPrincipal().map(TenantPrincipal::getUserId);
     }
 
-    private static Optional<ServixUserDetails> currentPrincipal() {
+    private static Optional<TenantPrincipal> currentPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof ServixUserDetails details)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof TenantPrincipal details)) {
             return Optional.empty();
         }
         return Optional.of(details);
