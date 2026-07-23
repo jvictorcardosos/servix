@@ -12,6 +12,7 @@
 
     <p v-if="customerStore.loading">Carregando clientes...</p>
     <p v-else-if="customerStore.error" class="error">{{ customerStore.error }}</p>
+    <p v-else-if="customerStore.message" class="success">{{ customerStore.message }}</p>
 
     <div v-else class="table-wrapper">
       <table>
@@ -185,5 +186,9 @@ td {
 
 .error {
   color: #b91c1c;
+}
+
+.success {
+  color: #166534;
 }
 </style>

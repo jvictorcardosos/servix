@@ -7,12 +7,16 @@
       </div>
     </header>
 
+    <p v-if="customerStore.loading">Carregando cliente...</p>
+    <p v-else-if="customerStore.error" class="error">{{ customerStore.error }}</p>
+    <p v-else-if="customerStore.message" class="success">{{ customerStore.message }}</p>
+
     <form class="card" @submit.prevent="save">
       <CustomerFormFields v-model="form" />
 
       <div class="actions">
         <RouterLink class="secondary" to="/customers">Voltar</RouterLink>
-        <button type="submit" class="primary" :disabled="customerStore.saving">
+        <button type="submit" class="primary" :disabled="customerStore.saving || customerStore.loading">
           {{ customerStore.saving ? 'Salvando...' : 'Salvar' }}
         </button>
       </div>
@@ -60,13 +64,17 @@ onMounted(async () => {
 })
 
 async function save() {
-  if (isEdit.value) {
-    await customerStore.updateCustomer(route.params.id, form)
-  } else {
-    await customerStore.createCustomer(form)
-  }
+  try {
+    if (isEdit.value) {
+      await customerStore.updateCustomer(route.params.id, form)
+    } else {
+      await customerStore.createCustomer(form)
+    }
 
-  await router.push('/customers')
+    await router.push('/customers')
+  } catch {
+    return
+  }
 }
 </script>
 
@@ -111,5 +119,13 @@ async function save() {
 .secondary {
   background: #e5e7eb;
   color: #111827;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.success {
+  color: #166534;
 }
 </style>

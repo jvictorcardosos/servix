@@ -13,6 +13,7 @@
 
     <p v-if="customerStore.loading">Carregando cliente...</p>
     <p v-else-if="customerStore.error" class="error">{{ customerStore.error }}</p>
+    <p v-else-if="customerStore.message" class="success">{{ customerStore.message }}</p>
 
     <div v-else class="card">
       <div class="grid">
@@ -65,14 +66,22 @@ function openDeleteDialog() {
 }
 
 async function toggleStatus() {
-  await customerStore.updateCustomerStatus(route.params.id, !customer.value.ativo)
-  await customerStore.loadCustomer(route.params.id)
+  try {
+    await customerStore.updateCustomerStatus(route.params.id, !customer.value.ativo)
+    await customerStore.loadCustomer(route.params.id)
+  } catch {
+    return
+  }
 }
 
 async function confirmDelete() {
-  await customerStore.deleteCustomer(route.params.id)
-  deleteDialog.value = false
-  await router.push('/customers')
+  try {
+    await customerStore.deleteCustomer(route.params.id)
+    deleteDialog.value = false
+    await router.push('/customers')
+  } catch {
+    return
+  }
 }
 </script>
 
@@ -129,5 +138,9 @@ async function confirmDelete() {
 
 .error {
   color: #b91c1c;
+}
+
+.success {
+  color: #166534;
 }
 </style>
