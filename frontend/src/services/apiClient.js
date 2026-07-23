@@ -11,6 +11,9 @@ export function setupApiClientAuth(authStore) {
     if (authStore.accessToken) {
       nextConfig.headers = nextConfig.headers ?? {}
       nextConfig.headers.Authorization = `Bearer ${authStore.accessToken}`
+      if (authStore.companyId) {
+        nextConfig.headers['X-Company-Id'] = authStore.companyId
+      }
     }
     return nextConfig
   })

@@ -231,3 +231,34 @@ Foi criado o módulo **core** para centralizar responsabilidades transversais:
 - **Validações compartilhadas**: utilitários e mensagens comuns.
 - **Configurações compartilhadas**: propriedades e constantes globais.
 - **Logging estruturado**: filtro de requisição com `requestId`, `tenantId` e `userId` em MDC, preparado para observabilidade.
+
+---
+
+## 13. Módulo de Clientes (Fase 1.3)
+
+### Objetivo
+Centralizar o cadastro e a consulta de clientes da empresa autenticada, mantendo isolamento por tenant e base pronta para evolução futura.
+
+### Estrutura implementada
+- Entidade `Customer` no schema `customer_schema`.
+- Controller, service, repository, mapper, DTOs e validações próprias.
+- Uso da infraestrutura compartilhada do `core` para auditoria, tenant, paginação e respostas padronizadas.
+
+### Endpoints
+- `POST /api/customers`
+- `GET /api/customers`
+- `GET /api/customers/{id}`
+- `PUT /api/customers/{id}`
+- `PATCH /api/customers/{id}/status`
+- `DELETE /api/customers/{id}`
+
+### Regras de negócio e segurança
+- Apenas `ADMIN`, `GESTOR` e `OPERADOR`.
+- Toda operação usa automaticamente a empresa do usuário autenticado.
+- Acesso entre tenants é bloqueado; cliente de outra empresa não é exposto.
+- Exclusão e edição exigem o contexto do tenant corrente.
+
+### Filtros e paginação
+- Filtros por `nome`, `cpfCnpj`, `telefone`, `email`, `ativo` e busca textual (`filter`).
+- Ordenação reutiliza a infraestrutura do `core`.
+- Resposta paginada segue o envelope padrão da API.
