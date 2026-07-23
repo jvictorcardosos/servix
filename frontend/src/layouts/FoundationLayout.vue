@@ -11,6 +11,11 @@
         <RouterLink to="/customers/new">Novo cliente</RouterLink>
         <RouterLink to="/services">Serviços</RouterLink>
         <RouterLink to="/services/new">Novo serviço</RouterLink>
+        <RouterLink to="/employees">Funcionários</RouterLink>
+        <RouterLink to="/employees/new">Novo funcionário</RouterLink>
+        <RouterLink to="/appointments">Agenda</RouterLink>
+        <RouterLink to="/appointments/list">Agendamentos</RouterLink>
+        <RouterLink to="/appointments/new">Novo agendamento</RouterLink>
       </nav>
     </header>
 

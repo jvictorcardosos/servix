@@ -132,7 +132,7 @@ Entregar um SaaS web para prestadores de serviço organizarem operação, atendi
 | API Gateway | Entrada única e roteamento | Sem banco de domínio | `/api/*` | REST |
 | Auth Service | Identidade e autenticação | Banco próprio | `/auth/*` | REST |
 | Customer Service | Empresas, usuários, clientes e serviços | Banco próprio | `/companies/*`, `/users/*`, `/customers/*`, `/services/*` | REST |
-| Service Order Service | Agenda e ordens de serviço | Banco próprio | `/appointments/*`, `/service-orders/*` | REST |
+| Scheduling Service | Funcionários, agenda e ordens de serviço | Banco próprio | `/employees/*`, `/appointments/*`, `/service-orders/*` | REST |
 | Billing Service | Financeiro e pagamentos | Banco próprio | `/billing/*`, `/payments/*` | REST |
 | Notification Service | Notificações | Banco próprio | `/notifications/*` | REST |
 
@@ -167,11 +167,17 @@ Diretriz: modelagem pronta para migração futura de cada domínio para banco pr
 ### Serviço
 - id, empresa_id, nome, descricao, preco_base, ativo, created_at, updated_at.
 
+### Funcionário
+- id, empresa_id, nome, email, telefone, ativo, created_at, updated_at.
+
+### Jornada de Trabalho
+- id, employee_id, day_of_week, start_time, end_time, active.
+
 ### Ordem de Serviço
 - id, empresa_id, cliente_id, servico_id, status, descricao, valor_total, data_execucao, created_at, updated_at.
 
 ### Agendamento
-- id, empresa_id, cliente_id, ordem_servico_id, inicio, fim, status, observacao, created_at, updated_at.
+- id, empresa_id, cliente_id, servico_id, employee_id, data_agendamento, start_time, end_time, status, observacao, created_at, updated_at.
 
 ### Pagamento
 - id, empresa_id, ordem_servico_id, valor, metodo, status, vencimento, pago_em, created_at, updated_at.
@@ -251,7 +257,12 @@ Observação: no MVP, esses endpoints serão expostos por um backend único (mon
    - Listagem paginada com filtros, busca, ordenação e faixa de preço/duração.
    - Consulta detalhada, edição, alteração de status e exclusão.
    - Base pronta para consumo por agenda e ordens de serviço.
-5. **Fase 2 - Evolução do Produto**
+5. **Fase 1.5 - Agenda**
+   - Cadastro de funcionários com jornadas de trabalho.
+   - Cadastro e edição de agendamentos com cálculo automático de horário final.
+   - Consulta diária, semanal e mensal da agenda.
+   - Validações de conflito, tenant, status e período.
+6. **Fase 2 - Evolução do Produto**
    - Evoluções de funcionalidades (dashboard avançado, notificações, etc.).
    - Extração de módulos para microserviços **somente com necessidade real**.
    - Separação de bancos **somente após critérios técnicos e de negócio**.

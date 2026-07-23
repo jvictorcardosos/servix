@@ -52,6 +52,7 @@ backend/
 ├── company
 ├── core
 ├── customer
+├── schedule
 ├── service-order
 ├── billing
 └── notification
@@ -93,6 +94,7 @@ Cada módulo deve conter:
 - `auth_schema`
 - `company_schema`
 - `customer_schema`
+- `schedule_schema`
 - `service_order_schema`
 - `billing_schema`
 - `notification_schema`
@@ -173,9 +175,10 @@ Serviços-alvo:
 1. API Gateway
 2. Auth Service
 3. Customer Service
-4. Service Order Service
-5. Billing Service
-6. Notification Service
+4. Scheduling Service
+5. Service Order Service
+6. Billing Service
+7. Notification Service
 
 ### Diretrizes da arquitetura-alvo
 
@@ -296,3 +299,55 @@ Centralizar o catálogo de serviços oferecidos pela empresa autenticada, com is
 - Filtros por `name`, `active`, faixa de `price`, faixa de `durationMinutes` e busca textual (`filter`).
 - Ordenação reutiliza a infraestrutura do `core`.
 - Resposta paginada segue o envelope padrão da API.
+
+---
+
+## 15. Módulo de Agenda (Fase 1.5)
+
+### Objetivo
+Gerenciar funcionários, jornadas de trabalho e agendamentos da empresa autenticada, mantendo isolamento por tenant e preparando o terreno para ordens de serviço futuras.
+
+### Estrutura implementada
+- Entidades `Employee`, `WorkSchedule` e `Appointment`.
+- Controllers, services, repositories, mappers, DTOs e validações próprias.
+- Uso da infraestrutura compartilhada do `core` para auditoria, tenant, paginação e respostas padronizadas.
+
+### Modelo de dados
+- `employees` no schema `schedule_schema`.
+- `work_schedules` no schema `schedule_schema`.
+- `appointments` no schema `schedule_schema`.
+
+### Endpoints
+- `POST /api/employees`
+- `GET /api/employees`
+- `GET /api/employees/{id}`
+- `PUT /api/employees/{id}`
+- `PATCH /api/employees/{id}/status`
+- `DELETE /api/employees/{id}`
+- `POST /api/appointments`
+- `GET /api/appointments`
+- `GET /api/appointments/{id}`
+- `PUT /api/appointments/{id}`
+- `PATCH /api/appointments/{id}/status`
+- `DELETE /api/appointments/{id}`
+- `GET /api/appointments/day`
+- `GET /api/appointments/week`
+- `GET /api/appointments/month`
+- `GET /api/appointments/employee/{id}`
+- `GET /api/appointments/customer/{id}`
+
+### Regras de negócio e segurança
+- Apenas `ADMIN`, `GESTOR` e `OPERADOR`.
+- Toda operação usa automaticamente a empresa do usuário autenticado.
+- Acesso entre tenants é bloqueado; agendamentos, funcionários e jornadas de outra empresa não são expostos.
+- Não aceita `company_id` vindo do frontend.
+- Agendamento em conflito para funcionário ou cliente é recusado.
+- Agendamento no passado é bloqueado por configuração.
+- Funcionário, cliente e serviço precisam estar ativos.
+- Horário final é calculado automaticamente com base na duração do serviço.
+
+### Filtros e visão de agenda
+- Listagem paginada de funcionários e agendamentos.
+- Filtros por status, período, funcionário, cliente e serviço.
+- Visualização diária, semanal e mensal por endpoints dedicados.
+- Estrutura de calendário preparada para expansão futura sem drag-and-drop nesta fase.

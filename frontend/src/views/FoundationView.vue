@@ -1,10 +1,11 @@
 <template>
   <section class="foundation">
     <h1>Servix</h1>
-    <p>Base técnica pronta. Os módulos de Clientes e Serviços já estão disponíveis.</p>
+    <p>Base técnica pronta. Os módulos de Clientes, Serviços e Agenda já estão disponíveis.</p>
     <div class="actions">
       <RouterLink class="cta" to="/customers">Abrir clientes</RouterLink>
       <RouterLink class="cta secondary" to="/services">Abrir serviços</RouterLink>
+      <RouterLink class="cta secondary" to="/appointments">Abrir agenda</RouterLink>
     </div>
   </section>
 </template>

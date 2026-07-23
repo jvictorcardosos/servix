@@ -9,6 +9,7 @@ import br.com.servix.auth.service.JwtService;
 import br.com.servix.company.domain.Company;
 import br.com.servix.company.domain.CompanyStatus;
 import br.com.servix.company.repository.CompanyRepository;
+import br.com.servix.customer.repository.CustomerRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Set;
@@ -22,6 +23,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import br.com.servix.schedule.repository.AppointmentRepository;
+import br.com.servix.schedule.repository.EmployeeRepository;
+import br.com.servix.schedule.repository.WorkScheduleRepository;
+import br.com.servix.service.repository.ServiceRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -50,11 +55,31 @@ class AuthIntegrationTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private WorkScheduleRepository workScheduleRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
+
+    @Autowired
     private JwtService jwtService;
 
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        appointmentRepository.deleteAll();
+        workScheduleRepository.deleteAll();
+        employeeRepository.deleteAll();
+        customerRepository.deleteAll();
+        serviceRepository.deleteAll();
         userRepository.deleteAll();
         companyRepository.deleteAll();
     }

@@ -11,6 +11,10 @@ import br.com.servix.auth.repository.UserRepository;
 import br.com.servix.company.domain.Company;
 import br.com.servix.company.domain.CompanyStatus;
 import br.com.servix.company.repository.CompanyRepository;
+import br.com.servix.customer.repository.CustomerRepository;
+import br.com.servix.schedule.repository.AppointmentRepository;
+import br.com.servix.schedule.repository.EmployeeRepository;
+import br.com.servix.schedule.repository.WorkScheduleRepository;
 import br.com.servix.service.dto.ServiceRequest;
 import br.com.servix.service.dto.ServiceStatusUpdateRequest;
 import br.com.servix.service.repository.ServiceRepository;
@@ -66,11 +70,27 @@ class ServiceIntegrationTest {
     private ServiceRepository serviceRepository;
 
     @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private WorkScheduleRepository workScheduleRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        appointmentRepository.deleteAll();
+        workScheduleRepository.deleteAll();
+        employeeRepository.deleteAll();
+        customerRepository.deleteAll();
         serviceRepository.deleteAll();
         userRepository.deleteAll();
         companyRepository.deleteAll();

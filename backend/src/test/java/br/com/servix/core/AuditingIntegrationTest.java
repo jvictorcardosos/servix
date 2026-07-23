@@ -5,6 +5,11 @@ import br.com.servix.auth.repository.UserRepository;
 import br.com.servix.company.domain.Company;
 import br.com.servix.company.domain.CompanyStatus;
 import br.com.servix.company.repository.CompanyRepository;
+import br.com.servix.customer.repository.CustomerRepository;
+import br.com.servix.schedule.repository.AppointmentRepository;
+import br.com.servix.schedule.repository.EmployeeRepository;
+import br.com.servix.schedule.repository.WorkScheduleRepository;
+import br.com.servix.service.repository.ServiceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +31,29 @@ class AuditingIntegrationTest {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private AppointmentRepository appointmentRepository;
+
+    @Autowired
+    private WorkScheduleRepository workScheduleRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
+
     @BeforeEach
     void setup() {
         refreshTokenRepository.deleteAll();
+        appointmentRepository.deleteAll();
+        workScheduleRepository.deleteAll();
+        employeeRepository.deleteAll();
+        customerRepository.deleteAll();
+        serviceRepository.deleteAll();
         userRepository.deleteAll();
         companyRepository.deleteAll();
     }

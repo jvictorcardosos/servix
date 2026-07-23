@@ -43,3 +43,6 @@ servix:
       secret: ${JWT_SECRET:change-me-in-real-env}
       access-expiration: ${JWT_ACCESS_EXPIRATION:900}
       refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800}
+  schedule:
+    allow-past-appointments: ${SCHEDULE_ALLOW_PAST_APPOINTMENTS:false}
+    past-appointment-tolerance-minutes: ${SCHEDULE_PAST_APPOINTMENT_TOLERANCE_MINUTES:0}

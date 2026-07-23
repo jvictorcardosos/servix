@@ -1,0 +1,10 @@
+package br.com.servix.schedule.domain;
+
+public enum AppointmentStatus {
+    SCHEDULED,
+    CONFIRMED,
+    IN_PROGRESS,
+    COMPLETED,
+    CANCELLED,
+    NO_SHOW
+}

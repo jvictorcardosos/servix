@@ -7,6 +7,12 @@ import CustomerDetailsView from '../views/customer/CustomerDetailsView.vue'
 import ServiceListView from '../views/service/ServiceListView.vue'
 import ServiceFormView from '../views/service/ServiceFormView.vue'
 import ServiceDetailsView from '../views/service/ServiceDetailsView.vue'
+import EmployeeListView from '../views/schedule/EmployeeListView.vue'
+import EmployeeFormView from '../views/schedule/EmployeeFormView.vue'
+import AppointmentCalendarView from '../views/schedule/AppointmentCalendarView.vue'
+import AppointmentListView from '../views/schedule/AppointmentListView.vue'
+import AppointmentFormView from '../views/schedule/AppointmentFormView.vue'
+import AppointmentDetailsView from '../views/schedule/AppointmentDetailsView.vue'
 
 const routes = [
   {
@@ -85,6 +91,78 @@ const routes = [
         path: 'services/:id/edit',
         name: 'service-edit',
         component: ServiceFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'employees',
+        name: 'employee-list',
+        component: EmployeeListView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'employees/new',
+        name: 'employee-create',
+        component: EmployeeFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'employees/:id/edit',
+        name: 'employee-edit',
+        component: EmployeeFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'appointments',
+        name: 'appointment-calendar',
+        component: AppointmentCalendarView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'appointments/list',
+        name: 'appointment-list',
+        component: AppointmentListView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'appointments/new',
+        name: 'appointment-create',
+        component: AppointmentFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'appointments/:id',
+        name: 'appointment-details',
+        component: AppointmentDetailsView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'appointments/:id/edit',
+        name: 'appointment-edit',
+        component: AppointmentFormView,
         meta: {
           requiresAuth: true,
           roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
