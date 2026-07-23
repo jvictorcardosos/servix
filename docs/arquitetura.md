@@ -262,3 +262,37 @@ Centralizar o cadastro e a consulta de clientes da empresa autenticada, mantendo
 - Filtros por `nome`, `cpfCnpj`, `telefone`, `email`, `ativo` e busca textual (`filter`).
 - Ordenação reutiliza a infraestrutura do `core`.
 - Resposta paginada segue o envelope padrão da API.
+
+---
+
+## 14. Módulo de Serviços (Fase 1.4)
+
+### Objetivo
+Centralizar o catálogo de serviços oferecidos pela empresa autenticada, com isolamento por tenant e base pronta para uso em agenda e ordens de serviço.
+
+### Estrutura implementada
+- Entidade `ServiceOffering` no schema `service_order_schema`.
+- Controller, service, repository, mapper, DTOs, especificações e validações próprias.
+- Uso da infraestrutura compartilhada do `core` para auditoria, tenant, paginação e respostas padronizadas.
+
+### Endpoints
+- `POST /api/services`
+- `GET /api/services`
+- `GET /api/services/{id}`
+- `PUT /api/services/{id}`
+- `PATCH /api/services/{id}/status`
+- `DELETE /api/services/{id}`
+
+### Regras de negócio e segurança
+- Apenas `ADMIN`, `GESTOR` e `OPERADOR`.
+- Toda operação usa automaticamente a empresa do usuário autenticado.
+- Acesso entre tenants é bloqueado; serviço de outra empresa não é exposto.
+- Nome obrigatório.
+- Duração maior que zero.
+- Preço maior que zero.
+- Pode ativar/desativar, editar e excluir.
+
+### Filtros e paginação
+- Filtros por `name`, `active`, faixa de `price`, faixa de `durationMinutes` e busca textual (`filter`).
+- Ordenação reutiliza a infraestrutura do `core`.
+- Resposta paginada segue o envelope padrão da API.

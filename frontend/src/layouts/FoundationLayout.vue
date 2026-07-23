@@ -9,6 +9,8 @@
         <RouterLink to="/">Início</RouterLink>
         <RouterLink to="/customers">Clientes</RouterLink>
         <RouterLink to="/customers/new">Novo cliente</RouterLink>
+        <RouterLink to="/services">Serviços</RouterLink>
+        <RouterLink to="/services/new">Novo serviço</RouterLink>
       </nav>
     </header>
 

@@ -1,8 +1,11 @@
 <template>
   <section class="foundation">
     <h1>Servix</h1>
-    <p>Base técnica pronta. Agora o módulo de Clientes já está disponível.</p>
-    <RouterLink class="cta" to="/customers">Abrir clientes</RouterLink>
+    <p>Base técnica pronta. Os módulos de Clientes e Serviços já estão disponíveis.</p>
+    <div class="actions">
+      <RouterLink class="cta" to="/customers">Abrir clientes</RouterLink>
+      <RouterLink class="cta secondary" to="/services">Abrir serviços</RouterLink>
+    </div>
   </section>
 </template>
 
@@ -22,5 +25,16 @@
   background: #1d4ed8;
   color: #ffffff;
   text-decoration: none;
+}
+
+.secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 </style>

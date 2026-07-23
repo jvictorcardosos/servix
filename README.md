@@ -79,7 +79,7 @@ npm run build
 
 ## Status Atual do Projeto
 
-- **Fase atual:** Fase 1.3 - Módulo de Clientes.
+- **Fase atual:** Fase 1.4 - Módulo de Serviços.
 
 ### O que está funcionando
 
@@ -98,6 +98,11 @@ npm run build
   - filtros por nome, documento, telefone, email e ativo;
   - paginação e ordenação;
   - isolamento por tenant com bloqueio de acesso entre empresas.
+- Módulo de Serviços implementado com:
+  - cadastro, consulta, edição, alteração de status e exclusão;
+  - filtros por nome, status, faixa de preço e duração;
+  - paginação e ordenação;
+  - isolamento por tenant com bloqueio de acesso entre empresas.
 - Flyway configurado com migration inicial `V1__initial_setup.sql` para criação dos schemas.
 - Flyway com estrutura de auth/company e constraints base (`V2`, `V3`).
 - Frontend Vue 3 com Vite, Vue Router, Pinia e Axios configurados.
@@ -107,7 +112,7 @@ npm run build
 ### Pendências
 
 - Executar ambiente Docker local com PostgreSQL em máquina com Docker instalado e em execução.
-- Iniciar os próximos módulos de negócio (Serviços, Agenda, Ordens de Serviço e Financeiro).
+- Iniciar os próximos módulos de negócio (Agenda, Ordens de Serviço e Financeiro).
 
 ### Requisitos para executar Docker localmente
 

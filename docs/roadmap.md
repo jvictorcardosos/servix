@@ -246,7 +246,12 @@ Observação: no MVP, esses endpoints serão expostos por um backend único (mon
    - Listagem paginada com filtros, busca e ordenação.
    - Consulta detalhada, edição, alteração de status e exclusão.
    - Base pronta para consumo por serviços, agenda e ordens de serviço.
-4. **Fase 2 - Evolução do Produto**
+4. **Fase 1.4 - Serviços**
+   - Catálogo de serviços com auditoria e multi-tenancy.
+   - Listagem paginada com filtros, busca, ordenação e faixa de preço/duração.
+   - Consulta detalhada, edição, alteração de status e exclusão.
+   - Base pronta para consumo por agenda e ordens de serviço.
+5. **Fase 2 - Evolução do Produto**
    - Evoluções de funcionalidades (dashboard avançado, notificações, etc.).
    - Extração de módulos para microserviços **somente com necessidade real**.
    - Separação de bancos **somente após critérios técnicos e de negócio**.
