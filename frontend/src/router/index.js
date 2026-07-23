@@ -13,6 +13,10 @@ import AppointmentCalendarView from '../views/schedule/AppointmentCalendarView.v
 import AppointmentListView from '../views/schedule/AppointmentListView.vue'
 import AppointmentFormView from '../views/schedule/AppointmentFormView.vue'
 import AppointmentDetailsView from '../views/schedule/AppointmentDetailsView.vue'
+import ServiceOrderListView from '../views/serviceorder/ServiceOrderListView.vue'
+import ServiceOrderFormView from '../views/serviceorder/ServiceOrderFormView.vue'
+import ServiceOrderDetailsView from '../views/serviceorder/ServiceOrderDetailsView.vue'
+import ServiceOrderTimelineView from '../views/serviceorder/ServiceOrderTimelineView.vue'
 
 const routes = [
   {
@@ -163,6 +167,51 @@ const routes = [
         path: 'appointments/:id/edit',
         name: 'appointment-edit',
         component: AppointmentFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'service-orders',
+        name: 'service-order-list',
+        component: ServiceOrderListView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'service-orders/new',
+        name: 'service-order-create',
+        component: ServiceOrderFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'service-orders/:id',
+        name: 'service-order-details',
+        component: ServiceOrderDetailsView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'service-orders/:id/edit',
+        name: 'service-order-edit',
+        component: ServiceOrderFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'service-orders/:id/timeline',
+        name: 'service-order-timeline',
+        component: ServiceOrderTimelineView,
         meta: {
           requiresAuth: true,
           roles: ['ADMIN', 'GESTOR', 'OPERADOR'],

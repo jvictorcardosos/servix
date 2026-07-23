@@ -18,6 +18,8 @@ import br.com.servix.schedule.repository.WorkScheduleRepository;
 import br.com.servix.service.dto.ServiceRequest;
 import br.com.servix.service.dto.ServiceStatusUpdateRequest;
 import br.com.servix.service.repository.ServiceRepository;
+import br.com.servix.serviceorder.repository.ServiceOrderHistoryRepository;
+import br.com.servix.serviceorder.repository.ServiceOrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -82,11 +84,19 @@ class ServiceIntegrationTest {
     private WorkScheduleRepository workScheduleRepository;
 
     @Autowired
+    private ServiceOrderHistoryRepository serviceOrderHistoryRepository;
+
+    @Autowired
+    private ServiceOrderRepository serviceOrderRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        serviceOrderHistoryRepository.deleteAll();
+        serviceOrderRepository.deleteAll();
         appointmentRepository.deleteAll();
         workScheduleRepository.deleteAll();
         employeeRepository.deleteAll();

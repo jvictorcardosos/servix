@@ -18,6 +18,8 @@ import br.com.servix.schedule.repository.AppointmentRepository;
 import br.com.servix.schedule.repository.EmployeeRepository;
 import br.com.servix.schedule.repository.WorkScheduleRepository;
 import br.com.servix.service.repository.ServiceRepository;
+import br.com.servix.serviceorder.repository.ServiceOrderHistoryRepository;
+import br.com.servix.serviceorder.repository.ServiceOrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Set;
@@ -78,6 +80,12 @@ class CustomerIntegrationTest {
     private ServiceRepository serviceRepository;
 
     @Autowired
+    private ServiceOrderHistoryRepository serviceOrderHistoryRepository;
+
+    @Autowired
+    private ServiceOrderRepository serviceOrderRepository;
+
+    @Autowired
     private ProfileRepository profileRepository;
 
     @Autowired
@@ -86,6 +94,8 @@ class CustomerIntegrationTest {
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        serviceOrderHistoryRepository.deleteAll();
+        serviceOrderRepository.deleteAll();
         appointmentRepository.deleteAll();
         workScheduleRepository.deleteAll();
         employeeRepository.deleteAll();

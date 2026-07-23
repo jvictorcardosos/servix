@@ -7,6 +7,7 @@
       </div>
       <div class="actions">
         <RouterLink class="secondary" :to="`/appointments/${route.params.id}/edit`">Editar</RouterLink>
+        <RouterLink class="secondary" :to="`/service-orders/new?appointmentId=${route.params.id}`">Gerar OS</RouterLink>
         <button type="button" class="danger" @click="openDeleteDialog">Excluir</button>
       </div>
     </header>

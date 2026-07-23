@@ -27,6 +27,8 @@ import br.com.servix.schedule.repository.AppointmentRepository;
 import br.com.servix.schedule.repository.EmployeeRepository;
 import br.com.servix.schedule.repository.WorkScheduleRepository;
 import br.com.servix.service.repository.ServiceRepository;
+import br.com.servix.serviceorder.repository.ServiceOrderHistoryRepository;
+import br.com.servix.serviceorder.repository.ServiceOrderRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,11 +72,19 @@ class AuthIntegrationTest {
     private ServiceRepository serviceRepository;
 
     @Autowired
+    private ServiceOrderHistoryRepository serviceOrderHistoryRepository;
+
+    @Autowired
+    private ServiceOrderRepository serviceOrderRepository;
+
+    @Autowired
     private JwtService jwtService;
 
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        serviceOrderHistoryRepository.deleteAll();
+        serviceOrderRepository.deleteAll();
         appointmentRepository.deleteAll();
         workScheduleRepository.deleteAll();
         employeeRepository.deleteAll();

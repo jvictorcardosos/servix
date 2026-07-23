@@ -174,7 +174,10 @@ Diretriz: modelagem pronta para migração futura de cada domínio para banco pr
 - id, employee_id, day_of_week, start_time, end_time, active.
 
 ### Ordem de Serviço
-- id, empresa_id, cliente_id, servico_id, status, descricao, valor_total, data_execucao, created_at, updated_at.
+- id, empresa_id, appointment_id, customer_id, professional_id, service_id, service_price, estimated_duration, actual_duration, scheduled_start, scheduled_end, started_at, finished_at, status, observations, created_at, updated_at.
+
+### Histórico da Ordem de Serviço
+- id, service_order_id, previous_status, new_status, changed_by, changed_at, observation.
 
 ### Agendamento
 - id, empresa_id, cliente_id, servico_id, employee_id, data_agendamento, start_time, end_time, status, observacao, created_at, updated_at.
@@ -262,7 +265,12 @@ Observação: no MVP, esses endpoints serão expostos por um backend único (mon
    - Cadastro e edição de agendamentos com cálculo automático de horário final.
    - Consulta diária, semanal e mensal da agenda.
    - Validações de conflito, tenant, status e período.
-6. **Fase 2 - Evolução do Produto**
+6. **Fase 1.6 - Ordens de Serviço**
+   - Abertura manual e a partir de agendamento.
+   - Início, pausa, retomada, conclusão e cancelamento.
+   - Histórico de transições e timeline operacional.
+   - Sincronização com agenda e bloqueio de conflito por profissional.
+7. **Fase 2 - Evolução do Produto**
    - Evoluções de funcionalidades (dashboard avançado, notificações, etc.).
    - Extração de módulos para microserviços **somente com necessidade real**.
    - Separação de bancos **somente após critérios técnicos e de negócio**.

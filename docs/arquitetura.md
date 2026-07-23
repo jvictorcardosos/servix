@@ -351,3 +351,68 @@ Gerenciar funcionários, jornadas de trabalho e agendamentos da empresa autentic
 - Filtros por status, período, funcionário, cliente e serviço.
 - Visualização diária, semanal e mensal por endpoints dedicados.
 - Estrutura de calendário preparada para expansão futura sem drag-and-drop nesta fase.
+
+---
+
+## 16. Módulo de Ordens de Serviço (Fase 1.6)
+
+### Objetivo
+Controlar a execução operacional do atendimento, conectando cliente, serviço, profissional e agendamento em um fluxo único e auditável.
+
+### Estrutura implementada
+- Entidade `ServiceOrder` no schema `service_order_schema`.
+- Entidade `ServiceOrderHistory` para trilha de transições.
+- Controller, service, repository, mapper, DTOs, specifications e validações próprias.
+- Uso da infraestrutura compartilhada do `core` para auditoria, tenant, paginação e respostas padronizadas.
+
+### Modelo de dados
+- `service_orders` no schema `service_order_schema`.
+- `service_order_history` no schema `service_order_schema`.
+
+### Estados
+- `OPEN`
+- `CONFIRMED`
+- `IN_PROGRESS`
+- `PAUSED`
+- `COMPLETED`
+- `CANCELLED`
+- `NO_SHOW`
+
+### Endpoints
+- `POST /api/service-orders`
+- `GET /api/service-orders`
+- `GET /api/service-orders/{id}`
+- `PUT /api/service-orders/{id}`
+- `DELETE /api/service-orders/{id}`
+- `PATCH /api/service-orders/{id}/start`
+- `PATCH /api/service-orders/{id}/pause`
+- `PATCH /api/service-orders/{id}/resume`
+- `PATCH /api/service-orders/{id}/finish`
+- `PATCH /api/service-orders/{id}/cancel`
+- `GET /api/service-orders/customer/{id}`
+- `GET /api/service-orders/professional/{id}`
+- `GET /api/service-orders/status/{status}`
+- `GET /api/service-orders/history/{id}`
+
+### Regras de negócio e segurança
+- Apenas `ADMIN`, `GESTOR` e `OPERADOR`.
+- Toda operação usa automaticamente a empresa do usuário autenticado.
+- Acesso entre tenants é bloqueado; ordens de outra empresa não são expostas.
+- Ordem pode ser criada manualmente ou a partir de um agendamento.
+- Ao criar a partir de um agendamento, cliente, profissional, serviço e horários são reaproveitados.
+- O agendamento é sincronizado com a evolução da ordem.
+- Não permite concluir sem iniciar.
+- Não permite iniciar duas ordens simultâneas para o mesmo profissional.
+- Não permite concluir ordem cancelada.
+- Não permite alterar ordem concluída.
+- Não permite excluir ordem concluída.
+
+### Histórico e timeline
+- Cada transição gera um registro em `service_order_history`.
+- O histórico permite montar a linha do tempo da ordem.
+- A tela de timeline consome o histórico para exibir criação, confirmação, início, pausa, retomada, conclusão e cancelamento.
+
+### Filtros e paginação
+- Filtros por cliente, profissional, serviço, status, período e busca textual.
+- Ordenação reutiliza a infraestrutura do `core`.
+- Resposta paginada segue o envelope padrão da API.

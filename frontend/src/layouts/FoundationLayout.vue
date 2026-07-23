@@ -16,6 +16,8 @@
         <RouterLink to="/appointments">Agenda</RouterLink>
         <RouterLink to="/appointments/list">Agendamentos</RouterLink>
         <RouterLink to="/appointments/new">Novo agendamento</RouterLink>
+        <RouterLink to="/service-orders">Ordens de serviço</RouterLink>
+        <RouterLink to="/service-orders/new">Nova OS</RouterLink>
       </nav>
     </header>
 

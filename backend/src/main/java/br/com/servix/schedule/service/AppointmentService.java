@@ -106,7 +106,10 @@ public class AppointmentService {
 
         Specification<Appointment> specification = buildSpecification(companyId, request.filter(), request.customerId(), request.serviceId(), request.employeeId(), request.status(), request.dateFrom(), request.dateTo());
         Page<Appointment> page = appointmentRepository.findAll(specification, pageable);
-        Page<AppointmentResponse> responsePage = page.map(appointment -> mapToResponse(appointment, companyId));
+        Map<UUID, Customer> customers = loadCustomers(companyId, extractIds(page.getContent(), Appointment::getCustomerId));
+        Map<UUID, ServiceOffering> services = loadServices(companyId, extractIds(page.getContent(), Appointment::getServiceId));
+        Map<UUID, Employee> employees = loadEmployees(companyId, extractIds(page.getContent(), Appointment::getEmployeeId));
+        Page<AppointmentResponse> responsePage = page.map(appointment -> toResponse(appointment, customers, services, employees));
 
         return PaginationUtils.fromPage(responsePage, new PageRequestParams(
                 pageable.getPageNumber(),
@@ -282,6 +285,14 @@ public class AppointmentService {
         Map<UUID, Customer> customers = loadCustomers(companyId, Set.of(appointment.getCustomerId()));
         Map<UUID, ServiceOffering> services = loadServices(companyId, Set.of(appointment.getServiceId()));
         Map<UUID, Employee> employees = loadEmployees(companyId, Set.of(appointment.getEmployeeId()));
+        return toResponse(appointment, customers, services, employees);
+    }
+
+    private AppointmentResponse toResponse(
+            Appointment appointment,
+            Map<UUID, Customer> customers,
+            Map<UUID, ServiceOffering> services,
+            Map<UUID, Employee> employees) {
         return appointmentMapper.toResponse(
                 appointment,
                 customers.getOrDefault(appointment.getCustomerId(), null) == null ? null : customers.get(appointment.getCustomerId()).getNome(),
