@@ -416,3 +416,71 @@ Controlar a execução operacional do atendimento, conectando cliente, serviço,
 - Filtros por cliente, profissional, serviço, status, período e busca textual.
 - Ordenação reutiliza a infraestrutura do `core`.
 - Resposta paginada segue o envelope padrão da API.
+
+---
+
+## 17. Módulo Financeiro (Fase 1.7)
+
+### Objetivo
+Gerenciar lançamentos financeiros vinculados ou não a ordens de serviço, com base para fluxo de caixa, contas a receber e futuras integrações bancárias.
+
+### Estrutura implementada
+- Entidade `FinancialTransaction` no schema `billing_schema`.
+- Entidade `PaymentMethod` no schema `billing_schema`.
+- Controller, service, repository, mapper, DTOs, specifications e validações próprias.
+- Uso da infraestrutura compartilhada do `core` para auditoria, tenant, paginação e respostas padronizadas.
+
+### Modelo de dados
+- `payment_methods` no schema `billing_schema`.
+- `financial_transactions` no schema `billing_schema`.
+
+### Formas de pagamento
+- Dinheiro
+- PIX
+- Cartão de Débito
+- Cartão de Crédito
+- Transferência
+- Boleto
+
+### Estados
+- `PENDING`
+- `PARTIALLY_PAID`
+- `PAID`
+- `CANCELLED`
+- `OVERDUE`
+- `REFUNDED`
+
+### Endpoints
+- `POST /api/financial`
+- `GET /api/financial`
+- `GET /api/financial/{id}`
+- `PUT /api/financial/{id}`
+- `DELETE /api/financial/{id}`
+- `PATCH /api/financial/{id}/pay`
+- `PATCH /api/financial/{id}/cancel`
+- `PATCH /api/financial/{id}/discount`
+- `PATCH /api/financial/{id}/surcharge`
+- `GET /api/financial/service-order/{id}`
+- `GET /api/financial/status/{status}`
+- `GET /api/financial/due`
+- `GET /api/financial/overdue`
+- `GET /api/payment-methods`
+
+### Regras de negócio e segurança
+- Apenas `ADMIN`, `GESTOR` e `OPERADOR`.
+- Toda operação usa automaticamente a empresa do usuário autenticado.
+- Acesso entre tenants é bloqueado; lançamentos de outra empresa não são expostos.
+- Lançamento pode ser criado manualmente ou gerado a partir de uma ordem de serviço.
+- Ao concluir uma ordem de serviço, a geração automática pode ocorrer conforme configuração.
+- Lançamentos já pagos não podem ser excluídos.
+- Pagamento parcial é suportado.
+- Descontos e acréscimos recalculam o total automaticamente.
+
+### Integração com Ordem de Serviço
+- O lançamento herda ordem de serviço, cliente, profissional e serviço quando gerado a partir da OS.
+- A conclusão da OS pode acionar a criação automática do lançamento.
+
+### Filtros e paginação
+- Filtros por período, cliente, profissional, serviço, forma de pagamento e status.
+- Ordenação reutiliza a infraestrutura do `core`.
+- Resposta paginada segue o envelope padrão da API.

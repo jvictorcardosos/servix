@@ -5,6 +5,8 @@ import br.com.servix.core.pagination.PagedResponse;
 import br.com.servix.core.pagination.PageRequestParams;
 import br.com.servix.core.pagination.PaginationUtils;
 import br.com.servix.core.tenant.TenantContextService;
+import br.com.servix.billing.config.FinancialProperties;
+import br.com.servix.billing.service.FinancialService;
 import br.com.servix.customer.domain.Customer;
 import br.com.servix.customer.repository.CustomerRepository;
 import br.com.servix.schedule.domain.Appointment;
@@ -62,6 +64,8 @@ public class ServiceOrderService {
     private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
     private final ServiceRepository serviceRepository;
+    private final FinancialService financialService;
+    private final FinancialProperties financialProperties;
     private final ServiceOrderMapper serviceOrderMapper;
     private final TenantContextService tenantContextService;
 
@@ -306,6 +310,9 @@ public class ServiceOrderService {
         }
         ServiceOrder saved = serviceOrderRepository.save(order);
         appendHistory(saved, previousStatus, ServiceOrderStatus.COMPLETED, observation);
+        if (financialProperties.isAutoGenerateOnServiceOrderCompletion()) {
+            financialService.generateFromServiceOrder(saved);
+        }
         return mapToResponse(saved, companyId);
     }
 

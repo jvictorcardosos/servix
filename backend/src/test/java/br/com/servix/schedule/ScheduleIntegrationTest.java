@@ -23,6 +23,7 @@ import br.com.servix.schedule.dto.EmployeeRequest;
 import br.com.servix.schedule.dto.EmployeeScheduleRequest;
 import br.com.servix.service.domain.ServiceOffering;
 import br.com.servix.service.repository.ServiceRepository;
+import br.com.servix.billing.repository.FinancialTransactionRepository;
 import br.com.servix.serviceorder.repository.ServiceOrderHistoryRepository;
 import br.com.servix.serviceorder.repository.ServiceOrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -101,9 +102,13 @@ class ScheduleIntegrationTest {
     @Autowired
     private ServiceOrderRepository serviceOrderRepository;
 
+    @Autowired
+    private FinancialTransactionRepository financialTransactionRepository;
+
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        financialTransactionRepository.deleteAll();
         serviceOrderHistoryRepository.deleteAll();
         serviceOrderRepository.deleteAll();
         appointmentRepository.deleteAll();

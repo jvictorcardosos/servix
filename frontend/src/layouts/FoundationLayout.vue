@@ -18,6 +18,8 @@
         <RouterLink to="/appointments/new">Novo agendamento</RouterLink>
         <RouterLink to="/service-orders">Ordens de serviço</RouterLink>
         <RouterLink to="/service-orders/new">Nova OS</RouterLink>
+        <RouterLink to="/financial">Financeiro</RouterLink>
+        <RouterLink to="/financial/new">Novo lançamento</RouterLink>
       </nav>
     </header>
 

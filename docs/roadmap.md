@@ -270,7 +270,12 @@ Observação: no MVP, esses endpoints serão expostos por um backend único (mon
    - Início, pausa, retomada, conclusão e cancelamento.
    - Histórico de transições e timeline operacional.
    - Sincronização com agenda e bloqueio de conflito por profissional.
-7. **Fase 2 - Evolução do Produto**
+7. **Fase 1.7 - Financeiro**
+   - Lançamentos manuais e automáticos a partir de ordens de serviço.
+   - Registro de pagamento parcial e total.
+   - Descontos, acréscimos, cancelamento e formas de pagamento.
+   - Base para fluxo de caixa, contas a pagar/receber e integrações bancárias.
+8. **Fase 2 - Evolução do Produto**
    - Evoluções de funcionalidades (dashboard avançado, notificações, etc.).
    - Extração de módulos para microserviços **somente com necessidade real**.
    - Separação de bancos **somente após critérios técnicos e de negócio**.

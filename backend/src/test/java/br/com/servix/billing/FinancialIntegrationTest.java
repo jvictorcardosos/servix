@@ -1,4 +1,4 @@
-package br.com.servix.serviceorder;
+package br.com.servix.billing;
 
 import br.com.servix.auth.domain.ProfileName;
 import br.com.servix.auth.domain.User;
@@ -12,21 +12,19 @@ import br.com.servix.company.domain.CompanyStatus;
 import br.com.servix.company.repository.CompanyRepository;
 import br.com.servix.customer.domain.Customer;
 import br.com.servix.customer.repository.CustomerRepository;
-import br.com.servix.schedule.domain.AppointmentStatus;
 import br.com.servix.schedule.domain.Employee;
 import br.com.servix.schedule.repository.AppointmentRepository;
 import br.com.servix.schedule.repository.EmployeeRepository;
 import br.com.servix.schedule.repository.WorkScheduleRepository;
-import br.com.servix.schedule.dto.AppointmentRequest;
 import br.com.servix.schedule.dto.EmployeeRequest;
 import br.com.servix.schedule.dto.EmployeeScheduleRequest;
-import br.com.servix.billing.repository.FinancialTransactionRepository;
 import br.com.servix.service.domain.ServiceOffering;
 import br.com.servix.service.repository.ServiceRepository;
 import br.com.servix.serviceorder.domain.ServiceOrderStatus;
-import br.com.servix.serviceorder.dto.ServiceOrderRequest;
+import br.com.servix.serviceorder.domain.ServiceOrder;
 import br.com.servix.serviceorder.repository.ServiceOrderHistoryRepository;
 import br.com.servix.serviceorder.repository.ServiceOrderRepository;
+import br.com.servix.serviceorder.dto.ServiceOrderRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -58,7 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class ServiceOrderIntegrationTest {
+class FinancialIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -100,7 +98,7 @@ class ServiceOrderIntegrationTest {
     private ServiceOrderHistoryRepository serviceOrderHistoryRepository;
 
     @Autowired
-    private FinancialTransactionRepository financialTransactionRepository;
+    private br.com.servix.billing.repository.FinancialTransactionRepository financialTransactionRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -121,114 +119,119 @@ class ServiceOrderIntegrationTest {
     }
 
     @Test
-    void shouldManageServiceOrdersWithinTenantAndTrackHistory() throws Exception {
+    void shouldCreatePayAndAutoGenerateFinancialTransactionsWithinTenant() throws Exception {
         AuthSeed seed = seedAuthenticatedUser("a");
         String token = login(seed.email(), seed.rawPassword());
 
-        CustomerSeed customer1 = createCustomer(token, "a");
-        CustomerSeed customer2 = createCustomer(token, "b");
+        CustomerSeed customer = createCustomer(token, "a");
         ServiceSeed service = createService(token);
         EmployeeSeed employee = createEmployee(token, "a");
 
-        ServiceOrderSeed order1 = createManualOrder(token, customer1.id(), service.id(), employee.id(), LocalDateTime.now().plusDays(2).withHour(9).withMinute(0), "Primeira OS");
-        ServiceOrderSeed order2 = createManualOrder(token, customer2.id(), service.id(), employee.id(), LocalDateTime.now().plusDays(2).withHour(10).withMinute(0), "Segunda OS");
-
-        mockMvc.perform(patch("/api/service-orders/" + order1.id() + "/start")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"));
-
-        mockMvc.perform(patch("/api/service-orders/" + order2.id() + "/start")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isConflict());
-
-        mockMvc.perform(patch("/api/service-orders/" + order1.id() + "/pause")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("PAUSED"));
-
-        mockMvc.perform(patch("/api/service-orders/" + order1.id() + "/resume")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"));
-
-        mockMvc.perform(patch("/api/service-orders/" + order1.id() + "/finish")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.data.actualDuration").isNumber());
-
-        mockMvc.perform(get("/api/service-orders/history/" + order1.id())
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(5))
-                .andExpect(jsonPath("$.data[0].newStatus").value("OPEN"))
-                .andExpect(jsonPath("$.data[4].newStatus").value("COMPLETED"));
-
-        mockMvc.perform(delete("/api/service-orders/" + order1.id())
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isBadRequest());
-
-        MvcResult appointmentResult = mockMvc.perform(post("/api/appointments")
+        MvcResult transactionResult = mockMvc.perform(post("/api/financial")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new AppointmentRequest(
-                                customer1.id(),
-                                service.id(),
-                                employee.id(),
-                                nextMonday(),
-                                LocalTime.of(10, 0),
-                                "Agendamento base"))))
+                        .content(objectMapper.writeValueAsString(new br.com.servix.billing.dto.FinancialTransactionRequest(
+                                null,
+                                new BigDecimal("200.00"),
+                                new BigDecimal("10.00"),
+                                new BigDecimal("5.00"),
+                                LocalDate.now().plusDays(5),
+                                java.util.UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                                "Lançamento manual",
+                                "REF-100"))))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
                 .andReturn();
 
-        JsonNode appointmentJson = objectMapper.readTree(appointmentResult.getResponse().getContentAsString());
-        UUID appointmentId = UUID.fromString(appointmentJson.path("data").get("id").asText());
+        JsonNode transactionJson = objectMapper.readTree(transactionResult.getResponse().getContentAsString());
+        UUID transactionId = UUID.fromString(transactionJson.path("data").get("id").asText());
 
-        MvcResult orderFromAppointmentResult = mockMvc.perform(post("/api/service-orders")
+        mockMvc.perform(patch("/api/financial/" + transactionId + "/pay")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new br.com.servix.billing.dto.FinancialPaymentRequest(
+                                new BigDecimal("50.00"),
+                                java.util.UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                                LocalDate.now(),
+                                "PAY-1",
+                                "Parcial"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PARTIALLY_PAID"));
+
+        mockMvc.perform(get("/api/financial/" + transactionId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.remainingAmount").value(145.0));
+
+        MvcResult serviceOrderResult = mockMvc.perform(post("/api/service-orders")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ServiceOrderRequest(
-                                appointmentId,
                                 null,
-                                null,
-                                null,
-                                null,
-                                "Criada a partir da agenda"))))
+                                customer.id(),
+                                employee.id(),
+                                service.id(),
+                                LocalDateTime.now().plusDays(2).withHour(10).withMinute(0),
+                                "OS financeira"))))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
                 .andReturn();
 
-        JsonNode serviceOrderJson = objectMapper.readTree(orderFromAppointmentResult.getResponse().getContentAsString());
-        UUID orderFromAppointmentId = UUID.fromString(serviceOrderJson.path("data").get("id").asText());
+        JsonNode serviceOrderJson = objectMapper.readTree(serviceOrderResult.getResponse().getContentAsString());
+        UUID serviceOrderId = UUID.fromString(serviceOrderJson.path("data").get("id").asText());
 
-        mockMvc.perform(get("/api/appointments/" + appointmentId)
+        mockMvc.perform(patch("/api/service-orders/" + serviceOrderId + "/start")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/service-orders/" + serviceOrderId + "/finish")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("CONFIRMED"));
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
 
-        mockMvc.perform(get("/api/service-orders/status/COMPLETED")
+        mockMvc.perform(get("/api/financial/service-order/" + serviceOrderId)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements").value(1));
+                .andExpect(jsonPath("$.data[0].serviceOrderId").value(serviceOrderId.toString()));
 
-        AuthSeed seedB = seedAuthenticatedUser("b");
-        String tokenB = login(seedB.email(), seedB.rawPassword());
-        CustomerSeed customerB = createCustomer(tokenB, "c");
-        ServiceSeed serviceB = createService(tokenB);
-        EmployeeSeed employeeB = createEmployee(tokenB, "b");
-        ServiceOrderSeed orderB = createManualOrder(tokenB, customerB.id(), serviceB.id(), employeeB.id(), LocalDateTime.now().plusDays(3).withHour(9).withMinute(0), "Tenant B");
-
-        mockMvc.perform(get("/api/service-orders/" + orderB.id())
+        mockMvc.perform(delete("/api/financial/" + transactionId)
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isNotFound());
-
-        assertThat(serviceOrderRepository.findByIdAndCompanyId(orderFromAppointmentId, seed.companyId())).isPresent();
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void shouldRequireAuthenticationForServiceOrderEndpoints() throws Exception {
-        mockMvc.perform(get("/api/service-orders"))
+    void shouldBlockCrossTenantAccess() throws Exception {
+        AuthSeed seedA = seedAuthenticatedUser("a");
+        AuthSeed seedB = seedAuthenticatedUser("b");
+
+        String tokenA = login(seedA.email(), seedA.rawPassword());
+        String tokenB = login(seedB.email(), seedB.rawPassword());
+
+        MvcResult result = mockMvc.perform(post("/api/financial")
+                        .header("Authorization", "Bearer " + tokenB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new br.com.servix.billing.dto.FinancialTransactionRequest(
+                                null,
+                                new BigDecimal("100.00"),
+                                BigDecimal.ZERO,
+                                BigDecimal.ZERO,
+                                LocalDate.now().plusDays(3),
+                                java.util.UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                                "Tenant B",
+                                "B-REF"))))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        UUID transactionId = UUID.fromString(json.path("data").get("id").asText());
+
+        mockMvc.perform(get("/api/financial/" + transactionId)
+                        .header("Authorization", "Bearer " + tokenA))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldRequireAuthenticationForFinancialEndpoints() throws Exception {
+        mockMvc.perform(get("/api/financial"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -292,29 +295,6 @@ class ServiceOrderIntegrationTest {
         return new EmployeeSeed(UUID.fromString(json.path("data").get("id").asText()));
     }
 
-    private ServiceOrderSeed createManualOrder(
-            String token,
-            UUID customerId,
-            UUID serviceId,
-            UUID professionalId,
-            LocalDateTime scheduledStart,
-            String observations) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/service-orders")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new ServiceOrderRequest(
-                                null,
-                                customerId,
-                                professionalId,
-                                serviceId,
-                                scheduledStart,
-                                observations))))
-                .andExpect(status().isCreated())
-                .andReturn();
-        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        return new ServiceOrderSeed(UUID.fromString(json.path("data").get("id").asText()));
-    }
-
     private AuthSeed seedAuthenticatedUser(String suffix) {
         Company company = new Company();
         company.setNome("Empresa " + suffix);
@@ -345,11 +325,6 @@ class ServiceOrderIntegrationTest {
         return json.path("data").get("accessToken").asText();
     }
 
-    private LocalDate nextMonday() {
-        LocalDate today = LocalDate.now();
-        return today.with(java.time.temporal.TemporalAdjusters.next(java.time.DayOfWeek.MONDAY));
-    }
-
     private record AuthSeed(String email, String rawPassword, UUID companyId) {
     }
 
@@ -360,8 +335,5 @@ class ServiceOrderIntegrationTest {
     }
 
     private record EmployeeSeed(UUID id) {
-    }
-
-    private record ServiceOrderSeed(UUID id) {
     }
 }

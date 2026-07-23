@@ -2,6 +2,8 @@ package br.com.servix.serviceorder;
 
 import br.com.servix.core.tenant.TenantContextService;
 import br.com.servix.customer.repository.CustomerRepository;
+import br.com.servix.billing.config.FinancialProperties;
+import br.com.servix.billing.service.FinancialService;
 import br.com.servix.schedule.repository.AppointmentRepository;
 import br.com.servix.schedule.repository.EmployeeRepository;
 import br.com.servix.service.repository.ServiceRepository;
@@ -50,6 +52,12 @@ class ServiceOrderServiceTest {
     private ServiceRepository serviceRepository;
 
     @Mock
+    private FinancialService financialService;
+
+    @Mock
+    private FinancialProperties financialProperties;
+
+    @Mock
     private ServiceOrderMapper serviceOrderMapper;
 
     @Mock
@@ -66,6 +74,8 @@ class ServiceOrderServiceTest {
                 customerRepository,
                 employeeRepository,
                 serviceRepository,
+                financialService,
+                financialProperties,
                 serviceOrderMapper,
                 tenantContextService);
     }

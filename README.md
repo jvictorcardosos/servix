@@ -6,7 +6,7 @@ Gestão completa para prestadores de serviço.
 
 Servix é um SaaS web para prestadores de serviço autônomos e pequenas empresas organizarem clientes, agenda, ordens de serviço e financeiro em um único sistema.
 
-O projeto já possui a base técnica, clientes, serviços, agenda e ordens de serviço implementados no monólito modular.
+O projeto já possui a base técnica, clientes, serviços, agenda, ordens de serviço e financeiro implementados no monólito modular.
 
 ## Tecnologias
 
@@ -79,7 +79,7 @@ npm run build
 
 ## Status Atual do Projeto
 
-- **Fase atual:** Fase 1.6 - Módulo de Ordens de Serviço.
+- **Fase atual:** Fase 1.7 - Módulo Financeiro.
 
 ### O que está funcionando
 
@@ -113,6 +113,11 @@ npm run build
   - início, pausa, retomada, conclusão e cancelamento;
   - histórico de transições e timeline operacional;
   - sincronização com agenda e bloqueio de conflito por profissional.
+- Módulo Financeiro implementado com:
+  - lançamento manual e automático a partir de ordem de serviço;
+  - pagamento parcial e total;
+  - descontos, acréscimos e cancelamento;
+  - formas de pagamento e base para fluxo de caixa.
 - Flyway configurado com migration inicial `V1__initial_setup.sql` para criação dos schemas.
 - Flyway com estrutura de auth/company e constraints base (`V2`, `V3`).
 - Frontend Vue 3 com Vite, Vue Router, Pinia e Axios configurados.
@@ -122,7 +127,7 @@ npm run build
 ### Pendências
 
 - Executar ambiente Docker local com PostgreSQL em máquina com Docker instalado e em execução.
-- Iniciar o próximo módulo de negócio (Financeiro).
+- Iniciar a fase de Dashboard e Relatórios.
 
 ### Requisitos para executar Docker localmente
 

@@ -17,6 +17,10 @@ import ServiceOrderListView from '../views/serviceorder/ServiceOrderListView.vue
 import ServiceOrderFormView from '../views/serviceorder/ServiceOrderFormView.vue'
 import ServiceOrderDetailsView from '../views/serviceorder/ServiceOrderDetailsView.vue'
 import ServiceOrderTimelineView from '../views/serviceorder/ServiceOrderTimelineView.vue'
+import FinancialListView from '../views/financial/FinancialListView.vue'
+import FinancialFormView from '../views/financial/FinancialFormView.vue'
+import FinancialDetailsView from '../views/financial/FinancialDetailsView.vue'
+import PaymentView from '../views/financial/PaymentView.vue'
 
 const routes = [
   {
@@ -212,6 +216,51 @@ const routes = [
         path: 'service-orders/:id/timeline',
         name: 'service-order-timeline',
         component: ServiceOrderTimelineView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'financial',
+        name: 'financial-list',
+        component: FinancialListView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'financial/new',
+        name: 'financial-create',
+        component: FinancialFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'financial/:id',
+        name: 'financial-details',
+        component: FinancialDetailsView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'financial/:id/edit',
+        name: 'financial-edit',
+        component: FinancialFormView,
+        meta: {
+          requiresAuth: true,
+          roles: ['ADMIN', 'GESTOR', 'OPERADOR'],
+        },
+      },
+      {
+        path: 'financial/:id/pay',
+        name: 'financial-pay',
+        component: PaymentView,
         meta: {
           requiresAuth: true,
           roles: ['ADMIN', 'GESTOR', 'OPERADOR'],

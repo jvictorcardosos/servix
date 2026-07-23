@@ -27,6 +27,7 @@ import br.com.servix.schedule.repository.AppointmentRepository;
 import br.com.servix.schedule.repository.EmployeeRepository;
 import br.com.servix.schedule.repository.WorkScheduleRepository;
 import br.com.servix.service.repository.ServiceRepository;
+import br.com.servix.billing.repository.FinancialTransactionRepository;
 import br.com.servix.serviceorder.repository.ServiceOrderHistoryRepository;
 import br.com.servix.serviceorder.repository.ServiceOrderRepository;
 
@@ -72,6 +73,9 @@ class AuthIntegrationTest {
     private ServiceRepository serviceRepository;
 
     @Autowired
+    private FinancialTransactionRepository financialTransactionRepository;
+
+    @Autowired
     private ServiceOrderHistoryRepository serviceOrderHistoryRepository;
 
     @Autowired
@@ -83,6 +87,7 @@ class AuthIntegrationTest {
     @BeforeEach
     void cleanUp() {
         refreshTokenRepository.deleteAll();
+        financialTransactionRepository.deleteAll();
         serviceOrderHistoryRepository.deleteAll();
         serviceOrderRepository.deleteAll();
         appointmentRepository.deleteAll();

@@ -46,3 +46,5 @@ servix:
   schedule:
     allow-past-appointments: ${SCHEDULE_ALLOW_PAST_APPOINTMENTS:false}
     past-appointment-tolerance-minutes: ${SCHEDULE_PAST_APPOINTMENT_TOLERANCE_MINUTES:0}
+  financial:
+    auto-generate-on-service-order-completion: ${FINANCIAL_AUTO_GENERATE_ON_SERVICE_ORDER_COMPLETION:true}
